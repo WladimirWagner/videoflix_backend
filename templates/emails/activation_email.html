@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoFlix - Confirm your email</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 24px;
+            color: #333333;
+            margin-bottom: 10px;
+        }
+        .message {
+            font-size: 16px;
+            color: #666666;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #5b21b6 100%);
+        }
+        .disclaimer {
+            font-size: 14px;
+            color: #888888;
+            margin-top: 30px;
+            line-height: 1.4;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer-text {
+            font-size: 14px;
+            color: #666666;
+            margin: 5px 0;
+        }
+        .footer-logo {
+            color: #6366f1;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">>VIDEOFLIX</h1>
+        </div>
+        
+        <div class="content">
+            <h2 class="greeting">Dear {{ user.username }},</h2>
+            <p class="message">
+                Thank you for registering with <strong>Videoflix</strong>. To complete your registration and verify your email address, please click the link below:
+            </p>
+            
+            <a href="{{ activation_url }}" class="button">Activate account</a>
+            
+            <p class="disclaimer">
+                If you did not create an account with us, please disregard this email.
+            </p>
+            
+            <p class="disclaimer">
+                Best regards,<br>
+                Your Videoflix Team.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p class="footer-text">This email was sent from VideoFlix</p>
+            <div class="footer-logo">>VIDEOFLIX</div>
+        </div>
+    </div>
+</body>
+</html>

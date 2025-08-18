@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from django.contrib.auth import authenticate, get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """
@@ -64,39 +64,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError({'error': 'Invalid credentials.'})
 
         data['user'] = user
-        return data
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Handles user authentication with email and password.
-    Validates credentials and returns user object if successful.
-    Returns user object if successful.
-    """
-    User = get_user_model()
-    email = serializers.EmailField(write_only=True)
-    password = serializers.CharField(write_only=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "username" in self.fields:
-            self.fields.pop("username")
-
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-        
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError({'error': 'Invalid credentials.'})
-        
-        if not user.check_password(password):
-            raise serializers.ValidationError({'error': 'Invalid credentials.'})
-        
-        if not user.is_active:
-            raise serializers.ValidationError({'error': 'Account is not active.'})
-        
-        data = super().validate({"username": user.username, "password": password})
         return data
 
 

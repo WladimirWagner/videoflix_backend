@@ -2,14 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import RegistrationSerializer, LoginSerializer, CustomTokenObtainPairSerializer, PasswordResetConfirmSerializer
+from .serializers import RegistrationSerializer, LoginSerializer, PasswordResetConfirmSerializer
 from videoflix_app.models import Profile
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_str, force_bytes
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
 
 class RegistrationView(APIView):
     """
@@ -33,6 +36,9 @@ class RegistrationView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             activation_token = default_token_generator.make_token(user)
             
+            # Send activation email
+            self.send_activation_email(user, uidb64, activation_token)
+            
             return Response({
                 'user': {
                     'id': user.id,
@@ -41,6 +47,44 @@ class RegistrationView(APIView):
                 'token': activation_token
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def send_activation_email(self, user, uidb64, token):
+        """Send activation email to user using Django's email service with HTML template"""
+        try:
+            activation_url = f"{settings.FRONTEND_URL}/activate/{uidb64}/{token}/"
+            
+            # Context for email templates
+            context = {
+                'user': user,
+                'activation_url': activation_url,
+            }
+            
+            # Render email templates
+            text_content = render_to_string('emails/activation_email.txt', context)
+            html_content = render_to_string('emails/activation_email.html', context)
+            
+            subject = "VideoFlix - Confirm your email"
+            
+            # Create multipart email
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            msg.attach_alternative(html_content, "text/html")
+            
+            # Send email
+            result = msg.send()
+            
+            if result == 1:
+                print(f"Activation email successfully sent to {user.email}")
+            else:
+                print(f"Failed to send activation email to {user.email}")
+                
+        except Exception as e:
+            print(f"E-Mail konnte nicht gesendet werden: {e}")
+            # In production, you might want to log this or handle it differently
 
 
 class ActivateAccountView(APIView):
@@ -86,6 +130,7 @@ class LoginView(APIView):
     """
     Handles user authentication endpoint.
     Validates credentials and returns user data.
+    Sets cookies for refresh and access tokens.
     """
     permission_classes = [AllowAny]
 
@@ -93,14 +138,37 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-
-            return Response({
+            
+            # JWT Tokens erstellen
+            refresh = RefreshToken.for_user(user)
+            access = refresh.access_token
+            
+            response = Response({
                 'detail': 'Login successful',
                 'user': {
                     'id': user.id,
                     'username': user.email,
                 }
             }, status=status.HTTP_200_OK)
+            
+            # Cookies setzen
+            response.set_cookie(
+                key='access_token', 
+                value=str(access), 
+                httponly=True, 
+                secure=True,
+                samesite='Lax'
+            )
+            
+            response.set_cookie(
+                key='refresh_token', 
+                value=str(refresh), 
+                httponly=True, 
+                secure=True,  
+                samesite='Lax'
+            )
+            
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -162,9 +230,8 @@ class PasswordResetView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             reset_token = default_token_generator.make_token(user)
             
-            # TODO: Implement email sending functionality
-            # For now, we just return success message
-            
+            self.send_password_reset_email(user, uidb64, reset_token)
+                        
             return Response(
                 {'detail': 'An email has been sent to reset your password.'},
                 status=status.HTTP_200_OK
@@ -175,6 +242,44 @@ class PasswordResetView(APIView):
                 {'detail': 'An email has been sent to reset your password.'},
                 status=status.HTTP_200_OK
             )
+
+    def send_password_reset_email(self, user, uidb64, token):
+        """Send password reset email to user using Django's email service with HTML template"""
+        try:
+            if isinstance(uidb64, bytes):
+                uidb64_str = uidb64.decode('utf-8')
+            else:
+                uidb64_str = uidb64
+                
+            reset_url = f"{settings.FRONTEND_URL}/password-reset/{uidb64_str}/{token}/"
+            
+            context = {
+                'user': user,
+                'reset_url': reset_url,
+            }
+            
+            text_content = render_to_string('emails/password_reset_email.txt', context)
+            html_content = render_to_string('emails/password_reset_email.html', context)
+            
+            subject = "VideoFlix - Reset your Password"
+            
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            msg.attach_alternative(html_content, "text/html")
+            
+            result = msg.send()
+            
+            if result == 1:
+                print(f"Password reset email successfully sent to {user.email}")
+            else:
+                print(f"Failed to send password reset email to {user.email}")
+                
+        except Exception as e:
+            print(f"Password reset E-Mail konnte nicht gesendet werden: {e}")
 
 
 class PasswordResetConfirmView(APIView):
@@ -215,46 +320,6 @@ class PasswordResetConfirmView(APIView):
             )
 
 
-class CookieTokenObtainPairView(TokenObtainPairView):
-    """
-    Handles user authentication endpoint.
-    Validates credentials and returns authentication token.
-    Sets cookies for refresh and access tokens.
-    """
-    permission_classes = [AllowAny]
-    serializer_class = CustomTokenObtainPairSerializer
-
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            access = serializer.validated_data['access']
-            refresh = serializer.validated_data['refresh']
-            response = Response({'message': 'Login successful'})
-
-            if access and refresh:
-                response.set_cookie(
-                    key='access_token', 
-                    value=str(access), 
-                    httponly=True, 
-                    secure=True, 
-                    samesite='Lax'
-                )
-                
-                response.set_cookie(
-                    key='refresh_token', 
-                    value=str(refresh), 
-                    httponly=True, 
-                    secure=True, 
-                    samesite='Lax'
-                )
-
-                response.data = {
-                    'message': 'Login successful'
-                }
-
-            return response
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class CookieTokenRefreshView(TokenRefreshView):
     """
@@ -281,7 +346,7 @@ class CookieTokenRefreshView(TokenRefreshView):
                 key='access_token', 
                 value=access_token, 
                 httponly=True, 
-                secure=True, 
+                secure=True,
                 samesite='Lax',
                 max_age=1800
             )
