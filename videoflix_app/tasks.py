@@ -20,14 +20,12 @@ def convert_video_to_hls(video_id):
         video.is_processing = True
         video.save()
         
-        # Create output directory
         video_name = os.path.splitext(os.path.basename(video.video_file.name))[0]
         output_dir = os.path.join(settings.MEDIA_ROOT, 'videos', 'hls', f'video_{video_id}')
         os.makedirs(output_dir, exist_ok=True)
         
         input_path = video.video_file.path
         
-        # Convert to different resolutions
         resolutions = [
             {'name': '480p', 'scale': '854:480', 'bitrate': '800k'},
             {'name': '720p', 'scale': '1280:720', 'bitrate': '2500k'},
@@ -39,7 +37,6 @@ def convert_video_to_hls(video_id):
                 output_path = os.path.join(output_dir, res['name'])
                 os.makedirs(output_path, exist_ok=True)
                 
-                # FFmpeg command for HLS conversion
                 cmd = [
                     'ffmpeg', '-i', input_path,
                     '-vf', f"scale={res['scale']}",
@@ -52,11 +49,9 @@ def convert_video_to_hls(video_id):
                     os.path.join(output_path, 'index.m3u8')
                 ]
                 
-                # Run FFmpeg command
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    # Update video model
                     if res['name'] == '480p':
                         video.has_480p = True
                     elif res['name'] == '720p':
@@ -71,7 +66,6 @@ def convert_video_to_hls(video_id):
             except Exception as e:
                 logger.error(f"Error converting {res['name']} for video {video_id}: {e}")
         
-        # Update video paths
         video.hls_path = f'videos/hls/video_{video_id}'
         video.is_processing = False
         video.processing_complete = True
@@ -103,10 +97,9 @@ def generate_thumbnail(video_id):
         
         thumbnail_path = os.path.join(thumbnail_dir, f'video_{video_id}_thumb.jpg')
         
-        # FFmpeg command to generate thumbnail
         cmd = [
             'ffmpeg', '-i', input_path,
-            '-ss', '00:00:10',  # Take frame at 10 seconds
+            '-ss', '00:00:10', 
             '-vframes', '1',
             '-vf', 'scale=640:360',
             thumbnail_path, '-y'
@@ -115,7 +108,6 @@ def generate_thumbnail(video_id):
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
-            # Update video model with relative path
             relative_path = os.path.relpath(thumbnail_path, settings.MEDIA_ROOT)
             video.thumbnail_image = relative_path
             video.save()
@@ -125,12 +117,3 @@ def generate_thumbnail(video_id):
             
     except Exception as e:
         logger.error(f"Error generating thumbnail for video {video_id}: {e}")
-
-# Legacy functions for backward compatibility
-def convert_480p(video_path):
-    """Legacy function - use convert_video_to_hls instead"""
-    logger.warning("convert_480p is deprecated, use convert_video_to_hls")
-    
-def convert_720p(video_path):
-    """Legacy function - use convert_video_to_hls instead"""
-    logger.warning("convert_720p is deprecated, use convert_video_to_hls")

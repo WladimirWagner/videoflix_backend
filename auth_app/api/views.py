@@ -26,17 +26,14 @@ class RegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             
-            # Create Profile for the user
             Profile.objects.create(
                 username=user,
                 email=user.email
             )
             
-            # Generate activation token
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             activation_token = default_token_generator.make_token(user)
             
-            # Send activation email
             self.send_activation_email(user, uidb64, activation_token)
             
             return Response({
@@ -53,19 +50,16 @@ class RegistrationView(APIView):
         try:
             activation_url = f"{settings.FRONTEND_URL}/activate/{uidb64}/{token}/"
             
-            # Context for email templates
             context = {
                 'user': user,
                 'activation_url': activation_url,
             }
             
-            # Render email templates
             text_content = render_to_string('emails/activation_email.txt', context)
             html_content = render_to_string('emails/activation_email.html', context)
             
             subject = "VideoFlix - Confirm your email"
             
-            # Create multipart email
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=text_content,
@@ -74,17 +68,10 @@ class RegistrationView(APIView):
             )
             msg.attach_alternative(html_content, "text/html")
             
-            # Send email
-            result = msg.send()
-            
-            if result == 1:
-                print(f"Activation email successfully sent to {user.email}")
-            else:
-                print(f"Failed to send activation email to {user.email}")
+            msg.send()
                 
         except Exception as e:
-            print(f"E-Mail konnte nicht gesendet werden: {e}")
-            # In production, you might want to log this or handle it differently
+            pass
 
 
 class ActivateAccountView(APIView):
@@ -139,7 +126,6 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             
-            # JWT Tokens erstellen
             refresh = RefreshToken.for_user(user)
             access = refresh.access_token
             
@@ -151,7 +137,6 @@ class LoginView(APIView):
                 }
             }, status=status.HTTP_200_OK)
             
-            # Cookies setzen
             response.set_cookie(
                 key='access_token', 
                 value=str(access), 
@@ -271,15 +256,10 @@ class PasswordResetView(APIView):
             )
             msg.attach_alternative(html_content, "text/html")
             
-            result = msg.send()
-            
-            if result == 1:
-                print(f"Password reset email successfully sent to {user.email}")
-            else:
-                print(f"Failed to send password reset email to {user.email}")
+            msg.send()
                 
         except Exception as e:
-            print(f"Password reset E-Mail konnte nicht gesendet werden: {e}")
+            pass
 
 
 class PasswordResetConfirmView(APIView):

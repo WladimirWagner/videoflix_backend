@@ -38,10 +38,8 @@ class HLSManifestView(APIView):
 
     def get(self, request, movie_id, resolution):
         try:
-            # Get the video object
             video = Video.objects.get(id=movie_id)
             
-            # Construct the HLS manifest file path
             if video.hls_path:
                 manifest_path = os.path.join(
                     settings.MEDIA_ROOT, 
@@ -50,7 +48,6 @@ class HLSManifestView(APIView):
                     'index.m3u8'
                 )
             else:
-                # Fallback path structure
                 manifest_path = os.path.join(
                     settings.MEDIA_ROOT, 
                     'videos', 
@@ -59,14 +56,12 @@ class HLSManifestView(APIView):
                     'index.m3u8'
                 )
             
-            # Check if the manifest file exists
             if not os.path.exists(manifest_path):
                 return Response(
                     {'error': 'Video manifest not found'},
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Read and return the M3U8 file
             with open(manifest_path, 'r', encoding='utf-8') as f:
                 manifest_content = f.read()
             
@@ -97,10 +92,8 @@ class HLSSegmentView(APIView):
 
     def get(self, request, movie_id, resolution, segment):
         try:
-            # Get the video object
             video = Video.objects.get(id=movie_id)
             
-            # Construct the segment file path
             if video.hls_path:
                 segment_path = os.path.join(
                     settings.MEDIA_ROOT, 
@@ -109,7 +102,6 @@ class HLSSegmentView(APIView):
                     segment
                 )
             else:
-                # Fallback path structure
                 segment_path = os.path.join(
                     settings.MEDIA_ROOT, 
                     'videos', 
@@ -118,14 +110,12 @@ class HLSSegmentView(APIView):
                     segment
                 )
             
-            # Check if the segment file exists
             if not os.path.exists(segment_path):
                 return Response(
                     {'error': 'Video segment not found'},
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Read and return the TS segment file
             with open(segment_path, 'rb') as f:
                 segment_content = f.read()
             

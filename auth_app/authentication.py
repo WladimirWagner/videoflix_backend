@@ -14,31 +14,22 @@ class CookieJWTAuthentication(JWTAuthentication):
         Returns a two-tuple of `User` and token if a valid signature has been
         supplied using JWT-based authentication in cookies. Otherwise returns `None`.
         """
-        print(f"DEBUG - CookieJWTAuthentication: Checking authentication for {request.path}")
-        print(f"DEBUG - Available cookies: {list(request.COOKIES.keys())}")
-        
         header = self.get_header(request)
         if header is not None:
             # If Authorization header is present, use standard JWT auth
-            print("DEBUG - Found Authorization header")
             raw_token = self.get_raw_token(header)
         else:
             # Try to get token from cookie
-            print("DEBUG - No Authorization header, checking cookies")
             raw_token = request.COOKIES.get('access_token')
-            print(f"DEBUG - Cookie access_token: {'Found' if raw_token else 'Not found'}")
         
         if raw_token is None:
-            print("DEBUG - No token found, authentication failed")
             return None
 
         try:
             validated_token = self.get_validated_token(raw_token)
             user = self.get_user(validated_token)
-            print(f"DEBUG - Authentication successful for user: {user.email if user else 'None'}")
             return user, validated_token
         except Exception as e:
-            print(f"DEBUG - Token validation failed: {e}")
             return None
     
     def get_raw_token(self, header):

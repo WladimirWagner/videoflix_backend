@@ -17,22 +17,18 @@ class Video(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=255)
     
-    # File fields
     video_file = models.FileField(upload_to='videos/originals/', blank=True, null=True)
     thumbnail_image = models.ImageField(upload_to='videos/thumbnails/', blank=True, null=True)
     preview_image = models.ImageField(upload_to='videos/previews/', blank=True, null=True)
     
-    # HLS and processing
-    hls_path = models.CharField(max_length=500, blank=True, null=True)  # Path to HLS files
+    hls_path = models.CharField(max_length=500, blank=True, null=True)
     is_processing = models.BooleanField(default=False)
     processing_complete = models.BooleanField(default=False)
     
-    # Video resolutions available
     has_480p = models.BooleanField(default=False)
     has_720p = models.BooleanField(default=False)
     has_1080p = models.BooleanField(default=False)
     
-    # Legacy field for backward compatibility
     thumbnail_url = models.URLField(blank=True, null=True)
     
     def __str__(self):

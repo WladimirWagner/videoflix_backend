@@ -53,7 +53,6 @@ class LoginSerializer(serializers.Serializer):
         if not password:
             raise serializers.ValidationError({'error': 'Password is required.'})
 
-        # Check if user exists and password is correct
         try:
             user = User.objects.get(email=email)
             if not user.check_password(password):
