@@ -179,15 +179,13 @@ SIMPLE_JWT = {
 
 # CORS-Einstellungen für Cookie-Support
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",  # Angular Frontend
-    "http://127.0.0.1:4200",
-    "http://localhost:5500",  # Live Server
-    "http://127.0.0.1:5500",  # Live Server mit IP
-]
+
+# CORS Origins aus Umgebungsvariablen
+cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200,http://localhost:5500,http://127.0.0.1:5500")
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
 
 # Für Development - entferne in Production!
-CORS_ALLOW_ALL_ORIGINS = True  
+CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "True").lower() == "true"  
 
 # CORS Headers für Cookies
 CORS_ALLOW_HEADERS = [

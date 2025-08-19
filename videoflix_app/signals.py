@@ -15,24 +15,26 @@ def video_post_save(sender, instance, created, **kwargs):
     if created and instance.video_file:
         logger.info(f"New video created: {instance.title} (ID: {instance.id})")
         
-        # Queue background tasks
-        queue = django_rq.get_queue('default', autocommit=True)
-        
-        # Generate thumbnail first
-        queue.enqueue(generate_thumbnail, instance.id)
-        
-        # Then convert to HLS
-        queue.enqueue(convert_video_to_hls, instance.id)
+        try:
+            queue = django_rq.get_queue('default')
+            
+            queue.enqueue(generate_thumbnail, instance.id)
+            
+            queue.enqueue(convert_video_to_hls, instance.id)
+        except Exception as e:
+            logger.error(f"Failed to queue tasks for video {instance.id}: {e}")
         
         logger.info(f"Queued processing tasks for video {instance.id}")
     
     elif not created and instance.video_file and not instance.is_processing and not instance.processing_complete:
-        # Video file was added to existing video
         logger.info(f"Video file added to existing video: {instance.title} (ID: {instance.id})")
         
-        queue = django_rq.get_queue('default', autocommit=True)
-        queue.enqueue(generate_thumbnail, instance.id)
-        queue.enqueue(convert_video_to_hls, instance.id)
+        try:
+            queue = django_rq.get_queue('default')
+            queue.enqueue(generate_thumbnail, instance.id)
+            queue.enqueue(convert_video_to_hls, instance.id)
+        except Exception as e:
+            logger.error(f"Failed to queue tasks for existing video {instance.id}: {e}")
 
 @receiver(post_delete, sender=Video)
 def video_post_delete(sender, instance, **kwargs):
@@ -44,28 +46,24 @@ def video_post_delete(sender, instance, **kwargs):
     
     logger.info(f"Deleting video: {instance.title} (ID: {instance.id})")
     
-    # Delete original video file
     if instance.video_file:
         try:
             instance.video_file.delete(save=False)
         except Exception as e:
             logger.error(f"Error deleting video file: {e}")
     
-    # Delete thumbnail
     if instance.thumbnail_image:
         try:
             instance.thumbnail_image.delete(save=False)
         except Exception as e:
             logger.error(f"Error deleting thumbnail: {e}")
     
-    # Delete preview image
     if instance.preview_image:
         try:
             instance.preview_image.delete(save=False)
         except Exception as e:
             logger.error(f"Error deleting preview: {e}")
     
-    # Delete HLS files
     if instance.hls_path:
         try:
             hls_dir = os.path.join(settings.MEDIA_ROOT, instance.hls_path)

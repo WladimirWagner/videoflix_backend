@@ -164,14 +164,42 @@ Supports multiple email backends:
 - **Worker**: RQ worker for background tasks
 
 ### Environment Variables
+
+Copy `env.template` to `.env` and configure:
+
 ```env
+# Django Settings
 SECRET_KEY=your-secret-key
+DEBUG=True
+
+# Database
 DB_NAME=videoflix_db
 DB_USER=videoflix_user
 DB_PASSWORD=your-password
-EMAIL_HOST_USER=your-email
-EMAIL_HOST_PASSWORD=your-password
+DB_HOST=db
+DB_PORT=5432
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_LOCATION=redis://redis:6379/1
+
+# Frontend
 FRONTEND_URL=http://localhost:4200
+
+# Security
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=http://localhost:4200
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:5500
+CORS_ALLOW_ALL_ORIGINS=True
+
+# Email
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
 ```
 
 ## Development

@@ -16,10 +16,8 @@ class CookieJWTAuthentication(JWTAuthentication):
         """
         header = self.get_header(request)
         if header is not None:
-            # If Authorization header is present, use standard JWT auth
             raw_token = self.get_raw_token(header)
         else:
-            # Try to get token from cookie
             raw_token = request.COOKIES.get('access_token')
         
         if raw_token is None:
@@ -40,15 +38,12 @@ class CookieJWTAuthentication(JWTAuthentication):
         parts = header.split()
 
         if len(parts) == 0:
-            # Empty header or cookie value
             return None
 
         if len(parts) == 1:
-            # Assume cookie value (just the token)
             return parts[0]
 
         if len(parts) == 2 and parts[0].lower() == 'bearer':
-            # Standard Authorization: Bearer <token>
             return parts[1]
 
         return None

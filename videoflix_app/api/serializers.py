@@ -14,5 +14,11 @@ class VideoSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
     
     def get_thumbnail_url(self, obj):
-        """Return thumbnail URL from computed property"""
-        return obj.thumbnail_url_computed
+        """Return absolute thumbnail URL for cross-origin requests"""
+        if obj.thumbnail_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.thumbnail_image.url)
+            else:
+                return f"http://127.0.0.1:8000{obj.thumbnail_image.url}"
+        return obj.thumbnail_url or ''
