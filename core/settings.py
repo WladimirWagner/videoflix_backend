@@ -214,4 +214,4 @@ SERVER_EMAIL = os.environ.get('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_SUBJECT_PREFIX', '[VideoFlix] ')
 
 # Frontend URL for email links
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:4200')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5500')

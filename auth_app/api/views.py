@@ -48,7 +48,7 @@ class RegistrationView(APIView):
     def send_activation_email(self, user, uidb64, token):
         """Send activation email to user using Django's email service with HTML template"""
         try:
-            activation_url = f"{settings.FRONTEND_URL}/activate.html?uid={uidb64}&token={token}"
+            activation_url = f"{settings.FRONTEND_URL}/project.Videoflix/pages/auth/activate.html?uid={uidb64}&token={token}"
             
             context = {
                 'user': user,
@@ -236,7 +236,7 @@ class PasswordResetView(APIView):
             else:
                 uidb64_str = uidb64
                 
-            reset_url = f"{settings.FRONTEND_URL}/confirm_password.html?uid={uidb64_str}&token={token}"
+            reset_url = f"{settings.FRONTEND_URL}/project.Videoflix/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
             
             context = {
                 'user': user,
