@@ -170,6 +170,12 @@ Processing is handled by Redis Queue (RQ) workers for scalability.
 ### Configuration
 The project uses SMTP for email sending. **Each developer must configure their own SMTP data.**
 
+#### Dynamic Frontend URL Detection
+The system automatically detects the current domain and port from the request and generates appropriate frontend URLs for email links:
+- **Development**: Backend on port 8000 → Frontend on port 5500
+- **Production**: Backend on port 443 → Frontend on port 443 (HTTPS)
+- **Fallback**: Uses `FRONTEND_URL` from settings if request context is not available
+
 #### Email Configuration in .env File
 
 Create a `.env` file in the project root with your SMTP data:
@@ -257,14 +263,14 @@ REDIS_PORT=6379
 REDIS_LOCATION=redis://redis:6379/1
 
 # Frontend
-FRONTEND_URL=http://localhost:4200
+FRONTEND_URL=http://localhost:5500
 
 # Security
 ALLOWED_HOSTS=localhost,127.0.0.1
 CSRF_TRUSTED_ORIGINS=http://localhost:4200
 
 # CORS
-CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:5500
+CORS_ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
 CORS_ALLOW_ALL_ORIGINS=True
 
 # Email (REQUIRED - enter your own SMTP data)

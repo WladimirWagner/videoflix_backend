@@ -34,7 +34,7 @@ class RegistrationView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             activation_token = default_token_generator.make_token(user)
             
-            self.send_activation_email(user, uidb64, activation_token)
+            self.send_activation_email(user, uidb64, activation_token, request)
             
             return Response({
                 'user': {
@@ -45,10 +45,28 @@ class RegistrationView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def send_activation_email(self, user, uidb64, token):
+    def send_activation_email(self, user, uidb64, token, request=None):
         """Send activation email to user using Django's email service with HTML template"""
         try:
-            activation_url = f"{settings.FRONTEND_URL}/project.Videoflix/pages/auth/activate.html?uid={uidb64}&token={token}"
+            # Dynamically determine frontend URL from request or use settings
+            if request and hasattr(request, 'META'):
+                # Get the current domain from the request
+                current_domain = request.META.get('HTTP_HOST', '').split(':')[0]
+                current_port = request.META.get('SERVER_PORT', '8000')
+                
+                # Determine frontend port based on current backend port
+                if current_port == '8000':
+                    frontend_port = '5500'  # Development
+                elif current_port == '443':
+                    frontend_port = '443'   # Production HTTPS
+                else:
+                    frontend_port = '5500'  # Default
+                
+                frontend_url = f"http://{current_domain}:{frontend_port}"
+            else:
+                frontend_url = settings.FRONTEND_URL
+            
+            activation_url = f"{frontend_url}/project.Videoflix/pages/auth/activate.html?uid={uidb64}&token={token}"
             
             context = {
                 'user': user,
@@ -215,7 +233,7 @@ class PasswordResetView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             reset_token = default_token_generator.make_token(user)
             
-            self.send_password_reset_email(user, uidb64, reset_token)
+            self.send_password_reset_email(user, uidb64, reset_token, request)
                         
             return Response(
                 {'detail': 'An email has been sent to reset your password.'},
@@ -228,15 +246,33 @@ class PasswordResetView(APIView):
                 status=status.HTTP_200_OK
             )
 
-    def send_password_reset_email(self, user, uidb64, token):
+    def send_password_reset_email(self, user, uidb64, token, request=None):
         """Send password reset email to user using Django's email service with HTML template"""
         try:
             if isinstance(uidb64, bytes):
                 uidb64_str = uidb64.decode('utf-8')
             else:
                 uidb64_str = uidb64
+            
+            # Dynamically determine frontend URL from request or use settings
+            if request and hasattr(request, 'META'):
+                # Get the current domain from the request
+                current_domain = request.META.get('HTTP_HOST', '').split(':')[0]
+                current_port = request.META.get('SERVER_PORT', '8000')
                 
-            reset_url = f"{settings.FRONTEND_URL}/project.Videoflix/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
+                # Determine frontend port based on current backend port
+                if current_port == '8000':
+                    frontend_port = '5500'  # Development
+                elif current_port == '443':
+                    frontend_port = '443'   # Production HTTPS
+                else:
+                    frontend_port = '5500'  # Default
+                
+                frontend_url = f"http://{current_domain}:{frontend_port}"
+            else:
+                frontend_url = settings.FRONTEND_URL
+                
+            reset_url = f"{frontend_url}/project.Videoflix/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
             
             context = {
                 'user': user,
