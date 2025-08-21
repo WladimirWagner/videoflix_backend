@@ -48,7 +48,7 @@ class RegistrationView(APIView):
     def send_activation_email(self, user, uidb64, token):
         """Send activation email to user using Django's email service with HTML template"""
         try:
-            activation_url = f"{settings.FRONTEND_URL}/activate/{uidb64}/{token}/"
+            activation_url = f"{settings.FRONTEND_URL}/activate.html?uid={uidb64}&token={token}"
             
             context = {
                 'user': user,
@@ -71,7 +71,7 @@ class RegistrationView(APIView):
             msg.send()
                 
         except Exception as e:
-            pass
+            print(f"Error sending activation email: {str(e)}")
 
 
 class ActivateAccountView(APIView):
@@ -236,7 +236,7 @@ class PasswordResetView(APIView):
             else:
                 uidb64_str = uidb64
                 
-            reset_url = f"{settings.FRONTEND_URL}/password-reset/{uidb64_str}/{token}/"
+            reset_url = f"{settings.FRONTEND_URL}/confirm_password.html?uid={uidb64_str}&token={token}"
             
             context = {
                 'user': user,
@@ -259,7 +259,7 @@ class PasswordResetView(APIView):
             msg.send()
                 
         except Exception as e:
-            pass
+            print(f"Error sending password reset email: {str(e)}")
 
 
 class PasswordResetConfirmView(APIView):

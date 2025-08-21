@@ -48,12 +48,21 @@ git clone <repository-url>
 cd videoflix_backend
 ```
 
-2. **Start with Docker**
+2. **Email Configuration (REQUIRED)**
+```bash
+# Create a .env file with your SMTP data
+cp .env.example .env
+# Edit .env and enter your email data
+```
+
+3. **Start with Docker**
 ```bash
 docker-compose up -d
 ```
 
 The backend server starts at http://localhost:8000
+
+**⚠️ Important**: Without proper email configuration, user registration and password reset will not work!
 
 ### Manual Setup
 
@@ -73,20 +82,29 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-3. **Setup Database**
+3. **Email Configuration (REQUIRED)**
+```bash
+# Create a .env file with your SMTP data
+cp .env.example .env
+# Edit .env and enter your email data
+```
+
+4. **Setup Database**
 ```bash
 python manage.py migrate
 ```
 
-4. **Create Superuser**
+5. **Create Superuser**
 ```bash
 python manage.py createsuperuser
 ```
 
-5. **Start Server**
+6. **Start Server**
 ```bash
 python manage.py runserver
 ```
+
+**⚠️ Important**: Without proper email configuration, user registration and password reset will not work!
 
 ## Data Model
 
@@ -150,10 +168,64 @@ Processing is handled by Redis Queue (RQ) workers for scalability.
 - **Responsive Design**: Mobile-friendly email templates
 
 ### Configuration
-Supports multiple email backends:
-- SMTP (Gmail, etc.)
-- Console backend for development
-- Custom SMTP servers
+The project uses SMTP for email sending. **Each developer must configure their own SMTP data.**
+
+#### Email Configuration in .env File
+
+Create a `.env` file in the project root with your SMTP data:
+
+```env
+# Email Configuration (REQUIRED - enter your own SMTP data)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=your-smtp-server.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=your-email@your-domain.com
+EMAIL_HOST_PASSWORD=your-password
+DEFAULT_FROM_EMAIL=VideoFlix <your-email@your-domain.com>
+SERVER_EMAIL=VideoFlix <your-email@your-domain.com>
+EMAIL_SUBJECT_PREFIX=[VideoFlix] 
+```
+
+#### Known SMTP Configurations
+
+**Gmail:**
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+```
+
+**All-Inkl/KAS-Server:**
+```env
+EMAIL_HOST=your-login.kasserver.com
+EMAIL_PORT=465
+EMAIL_USE_TLS=False
+EMAIL_USE_SSL=True
+EMAIL_HOST_USER=your-email@your-domain.com
+EMAIL_HOST_PASSWORD=your-password
+```
+
+**Outlook/Hotmail:**
+```env
+EMAIL_HOST=smtp-mail.outlook.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=your-email@outlook.com
+EMAIL_HOST_PASSWORD=your-password
+```
+
+#### Important Notes
+
+- **App Passwords**: For Gmail, you need to create an app password
+- **Enable 2FA**: 2-factor authentication is required for Gmail
+- **Firewall**: Make sure SMTP ports (587/465) are not blocked
+- **Docker**: Docker containers must be restarted after .env changes
 
 ## Docker Configuration
 
@@ -195,11 +267,17 @@ CSRF_TRUSTED_ORIGINS=http://localhost:4200
 CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:5500
 CORS_ALLOW_ALL_ORIGINS=True
 
-# Email
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+# Email (REQUIRED - enter your own SMTP data)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=your-smtp-server.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=your-email@your-domain.com
+EMAIL_HOST_PASSWORD=your-password
+DEFAULT_FROM_EMAIL=VideoFlix <your-email@your-domain.com>
+SERVER_EMAIL=VideoFlix <your-email@your-domain.com>
+EMAIL_SUBJECT_PREFIX=[VideoFlix]
 ```
 
 ## Development
@@ -230,11 +308,12 @@ Videos are processed automatically when uploaded through the admin interface. Pr
 - [ ] Set `DEBUG = False`
 - [ ] Configure secure database (PostgreSQL)
 - [ ] Set up Redis for production
-- [ ] Configure email backend
+- [ ] **Configure SMTP email backend** (REQUIRED)
 - [ ] Set secure cookies (`secure=True`)
 - [ ] Configure HTTPS
 - [ ] Set up media file serving
 - [ ] Configure background workers
+- [ ] Test email functionality (registration & password reset)
 
 ### Docker Production
 ```bash
