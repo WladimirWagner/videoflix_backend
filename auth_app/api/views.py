@@ -66,7 +66,7 @@ class RegistrationView(APIView):
             else:
                 frontend_url = settings.FRONTEND_URL
             
-            activation_url = f"{frontend_url}/project.Videoflix/pages/auth/activate.html?uid={uidb64}&token={token}"
+            activation_url = f"{frontend_url}/pages/auth/activate.html?uid={uidb64}&token={token}"
             
             context = {
                 'user': user,
@@ -272,7 +272,7 @@ class PasswordResetView(APIView):
             else:
                 frontend_url = settings.FRONTEND_URL
                 
-            reset_url = f"{frontend_url}/project.Videoflix/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
+            reset_url = f"{frontend_url}/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
             
             context = {
                 'user': user,
