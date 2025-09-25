@@ -14,6 +14,38 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 
+
+def get_frontend_url(request=None):
+    """
+    Determine the correct frontend URL based on the current request context.
+    
+    Args:
+        request: Django request object (optional)
+        
+    Returns:
+        str: The frontend URL to use for email links
+    """
+    if request and hasattr(request, 'META'):
+        # Get the current domain from the request
+        current_domain = request.META.get('HTTP_HOST', '').split(':')[0]
+        current_port = request.META.get('SERVER_PORT', '8000')
+        
+        # Production domain mapping
+        if current_domain == 'backend-videoflix.wladimir-wagner.com':
+            # Production: Backend domain -> Frontend domain
+            return "https://videoflix.wladimir-wagner.com"
+        elif current_port == '8000':
+            # Development: Backend on port 8000 -> Frontend on port 5500
+            return f"http://{current_domain}:5500"
+        elif current_port == '443':
+            # Production HTTPS: Use same domain but different subdomain
+            return f"https://{current_domain.replace('backend-', '')}"
+        else:
+            # Default fallback
+            return f"http://{current_domain}:5500"
+    else:
+        return settings.FRONTEND_URL
+
 class RegistrationView(APIView):
     """
     Handles user registration endpoint.
@@ -48,23 +80,8 @@ class RegistrationView(APIView):
     def send_activation_email(self, user, uidb64, token, request=None):
         """Send activation email to user using Django's email service with HTML template"""
         try:
-            # Dynamically determine frontend URL from request or use settings
-            if request and hasattr(request, 'META'):
-                # Get the current domain from the request
-                current_domain = request.META.get('HTTP_HOST', '').split(':')[0]
-                current_port = request.META.get('SERVER_PORT', '8000')
-                
-                # Determine frontend port based on current backend port
-                if current_port == '8000':
-                    frontend_port = '5500'  # Development
-                elif current_port == '443':
-                    frontend_port = '443'   # Production HTTPS
-                else:
-                    frontend_port = '5500'  # Default
-                
-                frontend_url = f"http://{current_domain}:{frontend_port}"
-            else:
-                frontend_url = settings.FRONTEND_URL
+            # Get the correct frontend URL
+            frontend_url = get_frontend_url(request)
             
             activation_url = f"{frontend_url}/pages/auth/activate.html?uid={uidb64}&token={token}"
             
@@ -254,23 +271,8 @@ class PasswordResetView(APIView):
             else:
                 uidb64_str = uidb64
             
-            # Dynamically determine frontend URL from request or use settings
-            if request and hasattr(request, 'META'):
-                # Get the current domain from the request
-                current_domain = request.META.get('HTTP_HOST', '').split(':')[0]
-                current_port = request.META.get('SERVER_PORT', '8000')
-                
-                # Determine frontend port based on current backend port
-                if current_port == '8000':
-                    frontend_port = '5500'  # Development
-                elif current_port == '443':
-                    frontend_port = '443'   # Production HTTPS
-                else:
-                    frontend_port = '5500'  # Default
-                
-                frontend_url = f"http://{current_domain}:{frontend_port}"
-            else:
-                frontend_url = settings.FRONTEND_URL
+            # Get the correct frontend URL
+            frontend_url = get_frontend_url(request)
                 
             reset_url = f"{frontend_url}/pages/auth/confirm_password.html?uid={uidb64_str}&token={token}"
             
